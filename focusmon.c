@@ -9,10 +9,8 @@
 
 /* Function declarations */
 static int getcurrmon(struct Monitor *monlist, int nmons);
-static int getmonleft(struct Monitor *monlist, int nmons, int currmon);
-static int getmonright(struct Monitor *monlist, int nmons, int currmon);
-static int getmonup(struct Monitor *monlist, int nmons, int currmon);
-static int getmondown(struct Monitor *monlist, int nmons, int currmon);
+static int checkmon(struct Monitor *monlist, int a, int b, int currmon, enum Direction dir);
+static int getmondir(struct Monitor *monlist, int nmons, int currmon, enum Direction dir);
 static int getmonnext(int nmons, int currmon);
 static int getmonprev(int nmons, int currmon);
 static void focusmon(struct Monitor *monlist, int mon);
@@ -41,17 +39,8 @@ main(int argc, char *argv[])
 	case Absolute:
 		mon = getnum(*argv);
 		break;
-	case Left:
-		mon = getmonleft(monlist, nmons, currmon);
-		break;
-	case Right:
-		mon = getmonright(monlist, nmons, currmon);
-		break;
-	case Up:
-		mon = getmonup(monlist, nmons, currmon);
-		break;
-	case Down:
-		mon = getmondown(monlist, nmons, currmon);
+	case Left: case Right: case Up: case Down:
+		mon = getmondir(monlist, nmons, currmon, dir);
 		break;
 	case Prev:
 		mon = getmonprev(nmons, currmon);
@@ -93,65 +82,50 @@ getcurrmon(struct Monitor *monlist, int nmons)
 	return mon;
 }
 
-/* get index of monitor to the left of the currently focused one */
+/*
+ * check whether monitor a is in the given direction,
+ * and check whether it is closer to current monitor than b
+ */
 static int
-getmonleft(struct Monitor *monlist, int nmons, int currmon)
+checkmon(struct Monitor *monlist, int a, int b, int currmon, enum Direction dir)
 {
-	int i, mon;
-
-	mon = currmon;
-	for (i = 0; i < nmons; i++) {
-		if (monlist[i].x < monlist[mon].x) {
-			mon = i;
-			break;
-		}
+	switch (dir) {
+	case Left:
+		if (monlist[a].x < monlist[currmon].x &&
+		    (b < 0 || monlist[a].x > monlist[b].x))
+			return 1;
+		break;
+	case Right:
+		if (monlist[a].x > monlist[currmon].x &&
+		    (b < 0 || monlist[a].x < monlist[b].x))
+			return 1;
+		break;
+	case Up:
+		if (monlist[a].y < monlist[currmon].y &&
+		    (b < 0 || monlist[a].x > monlist[b].y))
+			return 1;
+		break;
+	case Down:
+		if (monlist[a].y > monlist[currmon].y &&
+		    (b < 0 || monlist[a].y < monlist[b].y))
+			return 1;
+		break;
+	default:
+		break;
 	}
-	return mon;
+	return 0;
 }
 
-/* get index of monitor to the right of the currently focused one */
+/* get index of monitor by direction */
 static int
-getmonright(struct Monitor *monlist, int nmons, int currmon)
+getmondir(struct Monitor *monlist, int nmons, int currmon, enum Direction dir)
 {
 	int i, mon;
 
-	mon = currmon;
+	mon = -1;
 	for (i = 0; i < nmons; i++) {
-		if (monlist[i].x > monlist[mon].x) {
+		if (checkmon(monlist, i, mon, currmon, dir)) {
 			mon = i;
-			break;
-		}
-	}
-	return mon;
-}
-
-/* get index of monitor above the currently focused one */
-static int
-getmonup(struct Monitor *monlist, int nmons, int currmon)
-{
-	int i, mon;
-
-	mon = currmon;
-	for (i = 0; i < nmons; i++) {
-		if (monlist[i].y < monlist[mon].y) {
-			mon = i;
-			break;
-		}
-	}
-	return mon;
-}
-
-/* get index of monitor below the currently focused one */
-static int
-getmondown(struct Monitor *monlist, int nmons, int currmon)
-{
-	int i, mon;
-
-	mon = currmon;
-	for (i = 0; i < nmons; i++) {
-		if (monlist[i].y > monlist[mon].y) {
-			mon = i;
-			break;
 		}
 	}
 	return mon;
