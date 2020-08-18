@@ -1,5 +1,4 @@
 #include <err.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -10,9 +9,6 @@
 
 /* Macros */
 #define BETWEEN(x, a, b)    ((a) <= (x) && (x) <= (b))
-
-/* Direction */
-enum Direction {Absolute, Left, Right, Up, Down, Prev, Next};
 
 /* Function declarations */
 static struct Client *getclientgeoms(Window *winlist, ulong nwins);
@@ -35,39 +31,22 @@ static Atom netactivewindow;
 int
 main(int argc, char *argv[])
 {
+	enum Direction dir;
 	struct Monitor *monlist;
 	struct Client *geoms;
 	Window *winlist;
 	ulong currwin, nwins, win;
 	int currmon, nmons;
-	static enum Direction dir;
 
 	argc--;
 	argv++;
 
-	if (argc > 1)
+	if (argc != 1)
 		usage();
 
-	dir = Next;
-	if (argc == 1) {
-		if (tolower(**argv) == 'l') {
-			dir = Left;
-		} else if (tolower(**argv) == 'r') {
-			dir = Right;
-		} else if (tolower(**argv) == 'u') {
-			dir = Up;
-		} else if (tolower(**argv) == 'd') {
-			dir = Down;
-		} else if (tolower(**argv) == 'p') {
-			dir = Prev;
-		} else if (tolower(**argv) == 'n') {
-			dir = Next;
-		} else {
-			dir = Absolute;
-			win = getnum(*argv);
-		}
-	}
-
+	dir = getdirection(*argv);
+	if (dir == Absolute)
+		win = getnum(*argv);
 	initX();
 	netclientlist = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
 	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);

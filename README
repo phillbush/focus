@@ -44,10 +44,10 @@ There are three utilities in focus:
 • focusws  (focus workspaces).
 • focusmon (focus monitors).
 
-To run one of the focus utilities, call one of them with the argument
-“next”, “prev”, “left”, “right”, “up”, “down” in order to focus the
-workspace, monitor or window in the given direction.  For example, the
-following command focus the window on the left.
+To run one of the focus utilities, call them with the argument “next”,
+“prev”, “left”, “right”, “up”, “down” in order to focus the workspace,
+monitor or window in the given direction.  For example, the following
+command focus the window on the left.
 
 	$ focuswin left
 

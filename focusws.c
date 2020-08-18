@@ -1,5 +1,4 @@
 #include <err.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,10 +27,10 @@ static enum Mode cyclemode = Normal;
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	int direction = +1;
+	enum Direction dir;
 	ulong wscount, currws, ws;
 	ulong *wsusage = NULL;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "cp")) != -1) {
 		switch (ch) {
@@ -49,34 +48,28 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc != 1)
 		usage();
-	if (argc == 1) {
-		if (tolower(**argv) == 'p') {
-			direction = -1;
-		} else if (tolower(**argv) == 'n') {
-			direction = +1;
-		} else {
-			ws = getnum(*argv);
-			direction = 0;
-		}
-	}
 
 	initX();
 	netnumberofdesktops = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netcurrentdesktop = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	netwmdesktop = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
 
+	dir = getdirection(*argv);
 	wscount = getwscount();
 	currws = getcurrws(wscount);
-	if (direction) {
+	if (dir == Absolute) {
+		ws = getnum(*argv);
+	} else if (dir == Next || dir == Prev) {
 		if (cyclemode == Cluster || cyclemode == Populated)
 			wsusage = getwsusage(wscount);
-		if (direction > 0)
-			ws = getnextws(wsusage, wscount, currws);
-		else
-			ws = getprevws(wsusage, wscount, currws);
+		ws = (dir == Next) ? getnextws(wsusage, wscount, currws)
+		                   : getprevws(wsusage, wscount, currws);
 		free(wsusage);
+	} else {
+		printf("focusws does not support focus by direction\n");
+		return 0;
 	}
 	if (ws >= wscount)
 		errx(1, "workspace out of bounds");
@@ -263,6 +256,6 @@ focusws(ulong wsnum)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: cyclews [-cp] [ws]\n");
+	(void)fprintf(stderr, "usage: focusws [-cp] direction\n");
 	exit(1);
 }

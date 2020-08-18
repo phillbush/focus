@@ -1,5 +1,6 @@
 #include <err.h>
 #include <errno.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -25,6 +26,25 @@ void
 killX(void)
 {
 	XCloseDisplay(dpy);
+}
+
+/* get direction to focus */
+enum Direction
+getdirection(const char *s)
+{
+	if (tolower(*s) == 'l')
+		return Left;
+	else if (tolower(*s) == 'r')
+		return Right;
+	else if (tolower(*s) == 'u')
+		return Up;
+	else if (tolower(*s) == 'd')
+		return Down;
+	else if (tolower(*s) == 'p')
+		return Prev;
+	else if (tolower(*s) == 'n')
+		return Next;
+	return Absolute;
 }
 
 /* get number from s */

@@ -8,6 +8,8 @@
 
 typedef unsigned long ulong;
 
+enum Direction {Absolute, Left, Right, Up, Down, Prev, Next};
+
 struct Monitor {
 	int x, y, w, h;
 };
@@ -19,6 +21,7 @@ struct Client {
 
 void initX(void);
 void killX(void);
+enum Direction getdirection(const char *s);
 ulong getnum(const char *s);
 ulong getcardinalproperty(Window win, Atom prop);
 ulong getwinlist(Window **winlist);

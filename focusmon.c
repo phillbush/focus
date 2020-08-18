@@ -1,5 +1,4 @@
 #include <err.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,8 +6,6 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/Xinerama.h>
 #include "util.h"
-
-enum Direction {Absolute, Left, Right, Up, Down, Prev, Next};
 
 /* Function declarations */
 static int getcurrmon(struct Monitor *monlist, int nmons);
@@ -32,56 +29,36 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	if (argc > 1)
+	if (argc != 1)
 		usage();
-
-	dir = Next;
-	if (argc == 1) {
-		if (tolower(**argv) == 'l') {
-			dir = Left;
-		} else if (tolower(**argv) == 'r') {
-			dir = Right;
-		} else if (tolower(**argv) == 'u') {
-			dir = Up;
-		} else if (tolower(**argv) == 'd') {
-			dir = Down;
-		} else if (tolower(**argv) == 'p') {
-			dir = Prev;
-		} else if (tolower(**argv) == 'n') {
-			dir = Next;
-		} else {
-			dir = Absolute;
-			mon = getnum(*argv);
-		}
-	}
 
 	initX();
 
+	dir = getdirection(*argv);
 	nmons = getmonitors(&monlist);
-	if (dir != Absolute) {
-		currmon = getcurrmon(monlist, nmons);
-		switch (dir) {
-		case Absolute:
-			break;
-		case Left:
-			mon = getmonleft(monlist, nmons, currmon);
-			break;
-		case Right:
-			mon = getmonright(monlist, nmons, currmon);
-			break;
-		case Up:
-			mon = getmonup(monlist, nmons, currmon);
-			break;
-		case Down:
-			mon = getmondown(monlist, nmons, currmon);
-			break;
-		case Prev:
-			mon = getmonprev(nmons, currmon);
-			break;
-		case Next:
-			mon = getmonnext(nmons, currmon);
-			break;
-		}
+	currmon = getcurrmon(monlist, nmons);
+	switch (dir) {
+	case Absolute:
+		mon = getnum(*argv);
+		break;
+	case Left:
+		mon = getmonleft(monlist, nmons, currmon);
+		break;
+	case Right:
+		mon = getmonright(monlist, nmons, currmon);
+		break;
+	case Up:
+		mon = getmonup(monlist, nmons, currmon);
+		break;
+	case Down:
+		mon = getmondown(monlist, nmons, currmon);
+		break;
+	case Prev:
+		mon = getmonprev(nmons, currmon);
+		break;
+	case Next:
+		mon = getmonnext(nmons, currmon);
+		break;
 	}
 	if (mon < 0 || mon >= nmons)
 		errx(1, "unknown monitor: %d", mon);
@@ -226,6 +203,6 @@ focusmon(struct Monitor *monlist, int mon)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: focusmon [direction]\n");
+	(void)fprintf(stderr, "usage: focusmon direction\n");
 	exit(1);
 }
