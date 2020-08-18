@@ -1,0 +1,52 @@
+.TH FOCUSMON 1
+.SH NAME
+focusmon \- focus monitor
+.SH SYNOPSIS
+.B focusmon
+.RI [ direction ]
+.SH DESCRIPTION
+.B focusmon
+focuss focus a Xinerama monitor.
+The argument
+.I direction
+must be one of the following.
+.TP
+.B Left
+Focus the monitor to the left of the currently focused one.
+.TP
+.B Right
+Focus the monitor to the right of the currently focused one.
+.TP
+.B Up
+Focus the monitor above the currently focused one.
+.TP
+.B Down
+Focus the monitor below the currently focused one.
+.TP
+.B Prev
+Focus the monitor before the currently focused one.
+.TP
+.B Next
+Focus the monitor after the currently focused one.
+.TP
+.B N
+Where
+.B N
+is a number.
+Focus the N-th monitor.
+.SH ENVIRONMENT
+The following environment variables affect the execution of
+.B focusmon
+.TP
+.B DISPLAY
+The display where the monitors are.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B >0
+Error occurred.
+.SH SEE ALSO
+.IR focusws (1),
+.IR focuswin (1)

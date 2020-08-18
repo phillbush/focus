@@ -1,0 +1,75 @@
+                                 focus
+
+focus is a collection of utilities that change the focus of windows,
+workspaces or monitors.
+
+§ Files
+
+The files are:
+
+• ./README:     This file.
+• ./Makefile:   The makefile.
+• ./config.mk:  The setup for the makefile.
+• ./focusws.1:  The manual file (man page) for focusws.
+• ./focusws.c:  The source code of focusws.
+• ./focusmon.1: The manual file (man page) for focusmon.
+• ./focusmon.c: The source code of focusmon.
+• ./focuswin.1: The manual file (man page) for focuswin.
+• ./focuswin.c: The source code of focuswin.
+• ./util.*:     The source code of common functions, macros and global variables.
+
+
+§ Installation
+
+First, edit ./config.mk to match your local setup.
+
+In order to build focus you need the Xlib and the Xinorama header
+files.  Enter the following command to build focus.  This command
+creates the binary files ./focusws, ./focusmon and ./focuswin.
+
+	make
+
+By default, focus are installed into the /usr/local/ prefix.  Enter the
+following command to install focus (if necessary as root).  This command
+installs the binary files into the ${PREFIX}/bin/ directory, and the
+manual files into ${MANPREFIX}/man1/ directory.
+
+	make install
+
+
+§ Running focus
+
+There are three utilities in focus:
+• focuswin (focus windows).
+• focusws  (focus workspaces).
+• focusmon (focus monitors).
+
+To run one of the focus utilities, call one of them with the argument
+“next”, “prev”, “left”, “right”, “up”, “down” in order to focus the
+workspace, monitor or window in the given direction.  For example, the
+following command focus the window on the left.
+
+	$ focuswin left
+
+Providing a number N in place of a direction focus the N-th workspace,
+monitor or window.  For example, the following command focus the third
+monitor.
+
+	$ focusmon 3
+
+With focusws, you can use the option -p to ignore workspaces without a
+window.  For example, the following command focus the next workspace
+containing a window.
+
+	$ focusws -p next
+
+The “prev” and “next” directions “cycles” through the workspaces,
+monitors or windows.  That means that if it reaches the end of the
+workspace list, it continues from the beginning.
+
+Those utilities depend on a EWMH-compliant workspace.
+
+
+§ License
+
+This software is in the public domain and is provided AS IS, with NO WARRANTY.

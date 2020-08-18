@@ -1,0 +1,59 @@
+.TH FOCUSWS 1
+.SH NAME
+focusws \- focus workspace
+.SH SYNOPSIS
+.B focusws
+.RB [ \-cp ]
+.RI [ direction ]
+.SH DESCRIPTION
+.B focusws
+focus a window manager workspace.
+The argument
+.I direction
+must be one of the following.
+.TP
+.B next
+Focus the next workspace.
+.TP
+.B previous
+Focus the previous workspace.
+.TP
+.B N
+If N is a number, focus the N-th workspace.
+.PP
+The options are as follows:
+.TP
+.B \-c
+Cycle through the current cluster of workspaces.
+The current cluster of workspaces is a sequence of continuous populated
+workspaces next to the current workspace.
+That is, a cluster is a sequence of workspaces, one next to the other,
+that follows or precedes the currently focused workspace.
+The blank workspace following the cluster also belongs to the cluster.
+.TP
+.B \-p
+Cycle through populated workspaces.
+That is, ignore workspaces without a window in it.
+.PP
+Both
+.B \-c
+and
+.B \-p
+are incompatible and cannot be used together.
+Both options are ignored if a workspace number is supplied as argument.
+.SH ENVIRONMENT
+The following environment variables affect the execution of
+.B focusws
+.TP
+.B DISPLAY
+The display where the workspaces are.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B >0
+Error occurred.
+.SH SEE ALSO
+.IR focuswin (1),
+.IR focusmon (1),

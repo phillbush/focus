@@ -1,0 +1,53 @@
+.TH FOCUSWIN 1
+.SH NAME
+focuswin \- focus window
+.SH SYNOPSIS
+.B focuswin
+.RI (direction | number)
+.SH DESCRIPTION
+.B focuswin
+focus a window specified as the argument.
+The argument must be one of the following
+.TP
+.B left
+Focus the closest window to the left in the current monitor.
+.TP
+.B right
+Focus the closest window to the right in the current monitor.
+.TP
+.B up
+Focus the closest window upwards in the current monitor.
+.TP
+.B down
+Focus the closest window downwards in the current monitor.
+.TP
+.B next
+Focus the next window in the current monitor.
+.TP
+.B previous
+Focus the previous window in the current monitor.
+.TP
+.I N
+Where N is a number, focus the N-th window in the current monitor.
+.PP
+.B focuswin
+gives preference to windows aligned with the focused window,
+this is useful for focusing tiled windows.
+.B focuswin
+focus only windows visible in the monitor where the currently focused window is in.
+.SH ENVIRONMENT
+The following environment variables affect the execution of
+.B focuswin
+.TP
+.B DISPLAY
+The display where the window to be focused is.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B >0
+Error occurred.
+.SH SEE ALSO
+.IR focusmon (1),
+.IR focusws (1),
