@@ -44,9 +44,6 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	dir = getdirection(*argv);
-	if (dir == Absolute)
-		win = getnum(*argv);
 	initX();
 	netclientlist = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
 	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
@@ -56,6 +53,7 @@ main(int argc, char *argv[])
 		free(winlist);
 		return 0;
 	}
+	dir = getdirection(*argv);
 	nmons = getmonitors(&monlist);
 	geoms = getclientgeoms(winlist, nwins);
 	currwin = getfocuswin(winlist, nwins);
@@ -71,6 +69,7 @@ main(int argc, char *argv[])
 		win = getwindir(&monlist[currmon], geoms, nwins, currwin, dir);
 		break;
 	case Absolute:
+		win = getnum(*argv);
 		win = getwinabs(&monlist[currmon], geoms, nwins, currwin, win);
 		break;
 	}
@@ -81,11 +80,6 @@ main(int argc, char *argv[])
 	if (win != currwin)
 		focuswin(winlist[win]);
 	free(winlist);
-
-	// tofocus = getwintofocus(clients, nclients);
-	// free(clients);
-	// if (tofocus != None)
-	// 	focuswin(tofocus);
 
 	killX();
 

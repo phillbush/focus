@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 		break;
 	}
 	if (mon < 0 || mon >= nmons)
-		errx(1, "unknown monitor: %d", mon);
+		errx(1, "monitor out of bounds");
 	if (mon != currmon)
 		focusmon(monlist, mon);
 	free(monlist);
