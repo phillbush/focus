@@ -113,7 +113,7 @@ getwsusage(ulong wscount)
 	ulong winws;
 	ulong wincount;
 	ulong *wsusage;
-	ulong i, j;
+	ulong i;
 
 	if ((wsusage = calloc(wscount, sizeof *wsusage)) == NULL)
 		err(1, "calloc");
@@ -122,12 +122,8 @@ getwsusage(ulong wscount)
 
 	for (i = 0; i < wincount; i++) {
 		winws = getcardinalproperty(winlist[i], netwmdesktop);
-		if (winws < wscount)
+		if (winws < wscount) {
 			wsusage[winws]++;
-		else {
-			for (j = 0; j < wscount; j++) {
-				wsusage[j]++;
-			}
 		}
 	}
 	XFree(winlist);
