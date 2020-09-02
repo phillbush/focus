@@ -197,32 +197,9 @@ clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Directi
 static int
 clientisinmon(struct Client *c, struct Monitor *mon)
 {
-	if (mon->x <= c->x && c->x <= mon->x + mon->w && mon->y <= c->y && c->y <= mon->y + mon->h)
+	if (mon->x <= c->x && c->x < mon->x + mon->w && mon->y <= c->y && c->y < mon->y + mon->h)
 		return 1;
 	return 0;
-	//{
-	//	switch (dir) {
-	//	case Left:
-	//		if (c->x < focus->x)
-	//			return 1;
-	//		break;
-	//	case Right:
-	//		if (c->x > focus->x)
-	//			return 1;
-	//		break;
-	//	case Up:
-	//		if (c->y < focus->y)
-	//			return 1;
-	//		break;
-	//	case Down:
-	//		if (c->y > focus->y)
-	//			return 1;
-	//		break;
-	//	default:
-	//		return 1;
-	//	}
-	//}
-	//return 0;
 }
 
 /* check whether client c is in the correct direction relative to focus */
