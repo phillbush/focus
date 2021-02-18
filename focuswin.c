@@ -114,12 +114,14 @@ clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Directi
 	default:
 		break;
 	case Left: case Right:
-		if (a->y == focus->y && b->y != focus->y)
+		if (a->y == focus->y &&  b->y != focus->y)
 			return 1;
 		if (a->x > b->x + b->w && dir == Left)
 			return 1;
 		if (a->x + a->w < b->x && dir == Right)
 			return 1;
+		if (a->x == b->x && b->x == focus->x && b->w == focus->w)
+			return 0;
 		if (a->x == b->x)
 			return 1;
 		break;
@@ -130,6 +132,8 @@ clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Directi
 			return 1;
 		if (a->y + a->h < b->y && dir == Down)
 			return 1;
+		if (a->y == b->y && b->x == focus->x && b->w == focus->w)
+			return 0;
 		if (a->y == b->y)
 			return 1;
 		break;
