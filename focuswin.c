@@ -1,6 +1,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -10,80 +11,15 @@
 /* Macros */
 #define BETWEEN(x, a, b)    ((a) <= (x) && (x) <= (b))
 
-/* Function declarations */
-static struct Client *getclientgeoms(Window *winlist, ulong nwins);
-static ulong getfocuswin(Window *winlist, ulong nwins);
-static int getfocusmon(struct Client *geom, struct Monitor *monlist, int nmons);
-static int clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Direction dir);
-static int clientisinmon(struct Client *c, struct Monitor *mon);
-static ulong getwinprev(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin);
-static ulong getwinnext(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin);
-static ulong getwindir(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin, enum Direction dir);
-static ulong getwinabs(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin, ulong n);
-static void focuswin(Window win);
-static void usage(void);
-
-/* Variable declarations */
-static Atom netclientlist;
 static Atom netactivewindow;
+static int rflag = 0;
 
-/* focuswin: focus a window */
-int
-main(int argc, char *argv[])
+/* show usage */
+static void
+usage(void)
 {
-	enum Direction dir;
-	struct Monitor *monlist;
-	struct Client *geoms;
-	Window *winlist;
-	ulong currwin, nwins, win;
-	int currmon, nmons;
-
-	argc--;
-	argv++;
-
-	if (argc != 1)
-		usage();
-
-	initX();
-	netclientlist = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
-	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
-
-	nwins = getwinlist(&winlist);
-	if (nwins == 0) {
-		free(winlist);
-		return 0;
-	}
-	dir = getdirection(*argv);
-	nmons = getmonitors(&monlist);
-	geoms = getclientgeoms(winlist, nwins);
-	currwin = getfocuswin(winlist, nwins);
-	currmon = getfocusmon(&geoms[currwin], monlist, nmons);
-	switch (dir) {
-	case Prev:
-		win = getwinprev(&monlist[currmon], geoms, nwins, currwin);
-		break;
-	case Next:
-		win = getwinnext(&monlist[currmon], geoms, nwins, currwin);
-		break;
-	case Left: case Right: case Up: case Down:
-		win = getwindir(&monlist[currmon], geoms, nwins, currwin, dir);
-		break;
-	case Absolute:
-		win = getnum(*argv);
-		win = getwinabs(&monlist[currmon], geoms, nwins, currwin, win);
-		break;
-	}
-	free(geoms);
-	free(monlist);
-	if (win >= nwins)
-		errx(1, "window out of bounds");
-	if (win != currwin)
-		focuswin(winlist[win]);
-	free(winlist);
-
-	killX();
-
-	return 0;
+	(void)fprintf(stderr, "usage: focuswin [-r] direction\n");
+	exit(1);
 }
 
 /* get list of geometry of clients */
@@ -91,13 +27,23 @@ static struct Client *
 getclientgeoms(Window *winlist, ulong nwins)
 {
 	struct Client *clientlist;
+	Window win, parentwin = None;
 	XWindowAttributes wa;
 	ulong i;
+	Window dw, *dws;        /* dummy window */
+	unsigned du;            /* dummy variable */
 
 	if ((clientlist = calloc(nwins, sizeof *clientlist)) == NULL)
 		err(1, "calloc");
 	for (i = 0; i < nwins; i++) {
-		if (!XGetWindowAttributes(dpy, winlist[i], &wa))
+		win = winlist[i];
+		if (rflag) {
+			if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws) {
+				XFree(dws);
+				win = parentwin;
+			}
+		}
+		if (!XGetWindowAttributes(dpy, win, &wa))
 			errx(1, "could not get client geometry");
 		clientlist[i].x = wa.x;
 		clientlist[i].y = wa.y;
@@ -112,7 +58,6 @@ static ulong
 getfocuswin(Window *winlist, ulong nwins)
 {
 	Window win, focuswin = None, parentwin = None;
-	Atom netactivewindow;
 	unsigned char *u;
 	ulong i;
 	Atom da;            /* dummy variable */
@@ -121,7 +66,6 @@ getfocuswin(Window *winlist, ulong nwins)
 	unsigned du;        /* dummy variable */
 	unsigned long dl;   /* dummy variable */
 
-	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
 	if (XGetWindowProperty(dpy, root, netactivewindow, 0L, 1024, False,
 	                       XA_WINDOW, &da, &di, &dl, &dl, &u) == Success
 	                       && u) {
@@ -176,7 +120,7 @@ clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Directi
 			return 1;
 		if (a->x + a->w < b->x && dir == Right)
 			return 1;
-		if (a->x == b->x && abs(a->y - focus->y) < abs(b->y - focus->y))
+		if (a->x == b->x)
 			return 1;
 		break;
 	case Up: case Down:
@@ -186,7 +130,7 @@ clientcmp(struct Client *a, struct Client *b, struct Client *focus, enum Directi
 			return 1;
 		if (a->y + a->h < b->y && dir == Down)
 			return 1;
-		if (a->y == b->y && abs(a->x - focus->x) < abs(b->x - focus->x))
+		if (a->y == b->y)
 			return 1;
 		break;
 	}
@@ -271,8 +215,7 @@ getwinnext(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin)
 
 /* get window by direction dir */
 static ulong
-getwindir(struct Monitor *mon, struct Client *geom, ulong nwins,
-          ulong currwin, enum Direction dir)
+getwindir(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin, enum Direction dir)
 {
 	struct Client *curr;
 	ulong i, j;
@@ -289,8 +232,7 @@ getwindir(struct Monitor *mon, struct Client *geom, ulong nwins,
 
 /* get n-th window in monitor mon */
 static ulong
-getwinabs(struct Monitor *mon, struct Client *geom, ulong nwins,
-          ulong currwin, ulong n)
+getwinabs(struct Monitor *mon, struct Client *geom, ulong nwins, ulong currwin, ulong n)
 {
 	ulong i, j, count;
 
@@ -327,10 +269,71 @@ focuswin(Window win)
 		XSetInputFocus(dpy, win, RevertToPointerRoot, CurrentTime);
 }
 
-/* show usage */
-static void
-usage(void)
+/* focuswin: focus a window */
+int
+main(int argc, char *argv[])
 {
-	(void)fprintf(stderr, "usage: focuswin direction\n");
-	exit(1);
+	enum Direction dir;
+	struct Monitor *monlist;
+	struct Client *geoms;
+	Window *winlist;
+	ulong currwin, nwins, win;
+	int currmon, nmons;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "r")) != -1) {
+		switch (ch) {
+		case 'r':
+			rflag = 1;
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	initX();
+	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
+
+	nwins = getwinlist(&winlist);
+	if (nwins == 0) {
+		free(winlist);
+		return 0;
+	}
+	dir = getdirection(*argv);
+	nmons = getmonitors(&monlist);
+	geoms = getclientgeoms(winlist, nwins);
+	currwin = getfocuswin(winlist, nwins);
+	currmon = getfocusmon(&geoms[currwin], monlist, nmons);
+	switch (dir) {
+	case Prev:
+		win = getwinprev(&monlist[currmon], geoms, nwins, currwin);
+		break;
+	case Next:
+		win = getwinnext(&monlist[currmon], geoms, nwins, currwin);
+		break;
+	case Left: case Right: case Up: case Down:
+		win = getwindir(&monlist[currmon], geoms, nwins, currwin, dir);
+		break;
+	case Absolute:
+		win = getnum(*argv);
+		win = getwinabs(&monlist[currmon], geoms, nwins, currwin, win);
+		break;
+	}
+	free(geoms);
+	free(monlist);
+	if (win >= nwins)
+		errx(1, "window out of bounds");
+	if (win != currwin)
+		focuswin(winlist[win]);
+	free(winlist);
+
+	killX();
+
+	return 0;
 }

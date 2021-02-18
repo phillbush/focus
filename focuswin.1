@@ -3,10 +3,17 @@
 focuswin \- focus window
 .SH SYNOPSIS
 .B focuswin
-.RI (direction | number)
+.RB [ \-r ]
+.RI ( direction | number )
 .SH DESCRIPTION
 .B focuswin
 focus a window specified as the argument.
+.PP
+The options are as follows:
+.TP
+.B \-r
+This option should be used if the window manager reparents client windows.
+.PP
 The argument must be one of the following
 .TP
 .B left

@@ -1,6 +1,6 @@
 # paths
-PREFIX = /usr/local
-MANPREFIX = ${PREFIX}/share/man
+PREFIX = ../../usr/local
+MANPREFIX = ${PREFIX}/man
 
 LOCALINC = /usr/local/include
 LOCALLIB = /usr/local/lib
@@ -14,7 +14,7 @@ LIBS = -L${LOCALLIB} -L${X11LIB} -lX11 -lXinerama
 
 # flags
 CPPFLAGS =
-CFLAGS = -Wall -Wextra ${INCS} ${CPPFLAGS}
+CFLAGS = -g -O0 -Wall -Wextra ${INCS} ${CPPFLAGS}
 LDFLAGS = ${LIBS}
 
 # compiler and linker

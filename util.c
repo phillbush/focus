@@ -87,6 +87,7 @@ getwinlist(Window **winlist)
 {
 	unsigned char *list;
 	ulong len;
+	Atom netclientliststacking;
 	Atom netclientlist;
 	ulong dl;           /* dummy variable */
 	unsigned int du;    /* dummy variable */
@@ -94,10 +95,15 @@ getwinlist(Window **winlist)
 	Window dw;          /* dummy variable */
 	Atom da;            /* dummy variable */
 
+	netclientliststacking = XInternAtom(dpy, "_NET_CLIENT_LIST_STACKING", False);
 	netclientlist = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
-	if (XGetWindowProperty(dpy, root, netclientlist, 0L, 1024, False,
+	if (XGetWindowProperty(dpy, root, netclientliststacking, 0L, 1024, False,
 	                       XA_WINDOW, &da, &di, &len, &dl, &list) ==
 	                       Success && list) {
+		*winlist = (Window *)list;
+	} else if (XGetWindowProperty(dpy, root, netclientlist, 0L, 1024, False,
+	                              XA_WINDOW, &da, &di, &len, &dl, &list) ==
+	                              Success && list) {
 		*winlist = (Window *)list;
 	} else if (XQueryTree(dpy, root, &dw, &dw, winlist, &du)) {
 		len = (ulong)du;
