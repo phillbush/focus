@@ -1,7 +1,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -12,14 +11,33 @@
 #define BETWEEN(x, a, b)    ((a) <= (x) && (x) <= (b))
 
 static Atom netactivewindow;
-static int rflag = 0;
+static Atom wmstate;
 
 /* show usage */
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: focuswin [-r] direction\n");
+	(void)fprintf(stderr, "usage: focuswin direction\n");
 	exit(1);
+}
+
+/* get window's WM_STATE property */
+static long
+getstate(Window w)
+{
+	int format;
+	long result = -1;
+	unsigned char *p = NULL;
+	unsigned long n, extra;
+	Atom real;
+
+	if (XGetWindowProperty(dpy, w, wmstate, 0L, 2L, False, wmstate,
+		&real, &format, &n, &extra, (unsigned char **)&p) != Success)
+		return -1;
+	if (n != 0)
+		result = *p;
+	XFree(p);
+	return result;
 }
 
 /* get list of geometry of clients */
@@ -31,22 +49,35 @@ getclientgeoms(Window *winlist, ulong nwins)
 	XWindowAttributes wa;
 	ulong i;
 	Window dw, *dws;        /* dummy window */
+	int reparent = 0;
 	unsigned du;            /* dummy variable */
 
 	if ((clientlist = calloc(nwins, sizeof *clientlist)) == NULL)
 		err(1, "calloc");
 	for (i = 0; i < nwins; i++) {
 		win = winlist[i];
-		if (rflag) {
-			if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws) {
-				XFree(dws);
-				win = parentwin;
+		if (getstate(win) == WithdrawnState || getstate(win) == IconicState) {
+			clientlist[i].x = -1;
+			clientlist[i].y = -1;
+			clientlist[i].w = 1;
+			clientlist[i].h = 1;
+			continue;
+		}
+		if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws) {
+			XFree(dws);
+			if (parentwin != root) {
+				reparent = 1;
 			}
 		}
 		if (!XGetWindowAttributes(dpy, win, &wa))
 			errx(1, "could not get client geometry");
-		clientlist[i].x = wa.x;
-		clientlist[i].y = wa.y;
+		if (reparent) {
+			XTranslateCoordinates(dpy, win, wa.root, 0, 0,
+			                      &clientlist[i].x, &clientlist[i].y, &dw);
+		} else {
+			clientlist[i].x = wa.x;
+			clientlist[i].y = wa.y;
+		}
 		clientlist[i].w = wa.width;
 		clientlist[i].h = wa.height;
 	}
@@ -283,33 +314,20 @@ main(int argc, char *argv[])
 	Window *winlist;
 	ulong currwin, nwins, win;
 	int currmon, nmons;
-	int ch;
 
-	while ((ch = getopt(argc, argv, "r")) != -1) {
-		switch (ch) {
-		case 'r':
-			rflag = 1;
-			break;
-		default:
-			usage();
-			break;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc != 1)
+	if (argc != 2)
 		usage();
 
 	initX();
 	netactivewindow = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
+	wmstate = XInternAtom(dpy, "WM_STATE", False);
 
 	nwins = getwinlist(&winlist);
 	if (nwins == 0) {
 		free(winlist);
 		return 0;
 	}
-	dir = getdirection(*argv);
+	dir = getdirection(argv[1]);
 	nmons = getmonitors(&monlist);
 	geoms = getclientgeoms(winlist, nwins);
 	currwin = getfocuswin(winlist, nwins);
@@ -325,7 +343,7 @@ main(int argc, char *argv[])
 		win = getwindir(&monlist[currmon], geoms, nwins, currwin, dir);
 		break;
 	case Absolute:
-		win = getnum(*argv);
+		win = getnum(argv[1]);
 		win = getwinabs(&monlist[currmon], geoms, nwins, currwin, win);
 		break;
 	}
